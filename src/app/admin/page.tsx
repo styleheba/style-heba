@@ -139,7 +139,7 @@ export default async function AdminDashboard() {
                         shipped: 'bg-purple-100 text-purple-800',
                         delivered: 'bg-green-100 text-green-800',
                         cancelled: 'bg-red-100 text-red-800',
-                      }[order.status] || 'bg-slate-100 text-slate-600'
+                      }[order.status as string] || 'bg-slate-100 text-slate-600'
                     }`}>
                       {{
                         pending: '입금대기',
@@ -149,7 +149,7 @@ export default async function AdminDashboard() {
                         shipped: '배송중',
                         delivered: '완료',
                         cancelled: '취소',
-                      }[order.status] || order.status}
+                      }[order.status as string] || order.status}
                     </span>
                   </td>
                   <td className="px-6 py-3 text-right text-sm font-medium">
