@@ -48,7 +48,7 @@ export default async function HomePage() {
     .select('*')
     .in('key', ['hero', 'announcement']);
 
-  const hero = settings?.find((s) => s.key === 'hero')?.value as Record<string, string> | undefined;
+  const hero = (settings || []).find((s: any) => s.key === 'hero')?.value as Record<string, string> | undefined;
 
   return (
     <>
