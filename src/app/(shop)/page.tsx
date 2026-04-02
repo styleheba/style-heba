@@ -33,7 +33,7 @@ export default async function HomePage() {
     .order('open_at', { ascending: true })
     .limit(2);
 
-  const groupBuyIds = activeGroupBuys?.map((gb) => gb.id) || [];
+  const groupBuyIds = (activeGroupBuys || []).map((gb: any) => gb.id);
   const { data: groupBuyProducts } = groupBuyIds.length > 0
     ? await supabase
         .from('products')
