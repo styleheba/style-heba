@@ -13,7 +13,7 @@ export async function generateMetadata({ params }: { params: { id: string } }) {
     .single();
 
   return {
-    title: data ? `수정: ${data.title_ko || data.title}` : '공구 수정',
+    title: data ? `수정: ${(data as any).title_ko || (data as any).title}` : '공구 수정',
   };
 }
 

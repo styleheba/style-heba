@@ -6,11 +6,12 @@ export const revalidate = 60;
 
 export async function generateMetadata({ params }: { params: { slug: string } }) {
   const supabase = createServerSupabase();
-  const { data: product } = await supabase
+  const { data } = await supabase
     .from('products')
     .select('name, name_ko, description')
     .eq('slug', params.slug)
     .single();
+  const product = data as any;
 
   if (!product) return { title: '상품을 찾을 수 없습니다' };
 

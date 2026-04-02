@@ -30,9 +30,10 @@ export default async function AdminEmailsPage() {
     .order('created_at', { ascending: false })
     .limit(100);
 
-  const total = emails?.length || 0;
-  const sent = emails?.filter((e) => e.status === 'sent').length || 0;
-  const failed = emails?.filter((e) => e.status === 'failed').length || 0;
+  const emailList = (emails || []) as any[];
+  const total = emailList.length;
+  const sent = emailList.filter((e: any) => e.status === 'sent').length;
+  const failed = emailList.filter((e: any) => e.status === 'failed').length;
 
   return (
     <div>
@@ -74,7 +75,7 @@ export default async function AdminEmailsPage() {
             </tr>
           </thead>
           <tbody>
-            {(emails || []).map((email) => (
+            {emailList.map((email: any) => (
               <tr key={email.id} className="border-b border-slate-50">
                 <td className="px-6 py-3">
                   {email.status === 'sent' ? (

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { Suspense, useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Package, Clock, LogOut, Mail } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -21,7 +21,7 @@ interface Order {
   items: { product_name: string; quantity: number; product_price: number }[];
 }
 
-export default function MyPage() {
+function MyPageContent() {
   const searchParams = useSearchParams();
   const [email, setEmail] = useState('');
   const [inputEmail, setInputEmail] = useState('');
@@ -29,19 +29,13 @@ export default function MyPage() {
   const [loading, setLoading] = useState(false);
   const [sendingLink, setSendingLink] = useState(false);
 
-  // Auto-login from magic link
   useEffect(() => {
     const authEmail = searchParams.get('auth');
     const error = searchParams.get('error');
-
-    if (error === 'expired') {
-      toast.error('링크가 만료되었습니다. 다시 요청해주세요.');
-    }
-
+    if (error === 'expired') toast.error('링크가 만료되었습니다. 다시 요청해주세요.');
     if (authEmail) {
       setEmail(authEmail);
       localStorage.setItem('sh-email', authEmail);
-      // Clean URL
       window.history.replaceState({}, '', '/mypage');
     } else {
       const saved = localStorage.getItem('sh-email');
@@ -49,7 +43,6 @@ export default function MyPage() {
     }
   }, [searchParams]);
 
-  // Fetch orders when email is set
   useEffect(() => {
     if (!email) return;
     fetchOrders();
@@ -97,7 +90,6 @@ export default function MyPage() {
     localStorage.removeItem('sh-email');
   };
 
-  // Not logged in
   if (!email) {
     return (
       <div className="container-app py-16">
@@ -106,24 +98,10 @@ export default function MyPage() {
             <Mail className="w-8 h-8 text-brand-500" />
           </div>
           <h1 className="text-2xl font-bold text-slate-900 mb-2">마이페이지</h1>
-          <p className="text-slate-500 text-sm mb-6">
-            이메일을 입력하면 로그인 링크를 보내드립니다
-          </p>
-
+          <p className="text-slate-500 text-sm mb-6">이메일을 입력하면 로그인 링크를 보내드립니다</p>
           <div className="flex gap-2">
-            <input
-              type="email"
-              value={inputEmail}
-              onChange={(e) => setInputEmail(e.target.value)}
-              placeholder="이메일 주소"
-              className="input-base flex-1"
-              onKeyDown={(e) => e.key === 'Enter' && handleRequestLink()}
-            />
-            <button
-              onClick={handleRequestLink}
-              disabled={sendingLink || !inputEmail}
-              className="btn-primary flex-shrink-0"
-            >
+            <input type="email" value={inputEmail} onChange={(e) => setInputEmail(e.target.value)} placeholder="이메일 주소" className="input-base flex-1" onKeyDown={(e) => e.key === 'Enter' && handleRequestLink()} />
+            <button onClick={handleRequestLink} disabled={sendingLink || !inputEmail} className="btn-primary flex-shrink-0">
               {sendingLink ? '발송중...' : '로그인'}
             </button>
           </div>
@@ -132,7 +110,6 @@ export default function MyPage() {
     );
   }
 
-  // Logged in
   return (
     <div className="container-app py-8">
       <div className="flex items-center justify-between mb-8">
@@ -141,12 +118,10 @@ export default function MyPage() {
           <p className="text-sm text-slate-500 mt-1">{email}</p>
         </div>
         <button onClick={handleLogout} className="btn-ghost text-slate-400">
-          <LogOut className="w-4 h-4 mr-1" />
-          로그아웃
+          <LogOut className="w-4 h-4 mr-1" />로그아웃
         </button>
       </div>
 
-      {/* Orders */}
       <h2 className="text-lg font-bold text-slate-900 mb-4">주문 내역</h2>
 
       {loading ? (
@@ -162,47 +137,39 @@ export default function MyPage() {
             <div key={order.id} className="card p-5">
               <div className="flex items-center justify-between mb-3">
                 <div>
-                  <p className="text-sm font-bold text-slate-900">
-                    {order.order_number}
-                  </p>
+                  <p className="text-sm font-bold text-slate-900">{order.order_number}</p>
                   <p className="text-xs text-slate-400 flex items-center gap-1 mt-0.5">
-                    <Clock className="w-3 h-3" />
-                    {formatDateKo(order.created_at)}
+                    <Clock className="w-3 h-3" />{formatDateKo(order.created_at)}
                   </p>
                 </div>
-                <span
-                  className={cn(
-                    'badge',
-                    ORDER_STATUS_COLORS[order.status] || 'bg-slate-100 text-slate-600'
-                  )}
-                >
+                <span className={cn('badge', ORDER_STATUS_COLORS[order.status] || 'bg-slate-100 text-slate-600')}>
                   {ORDER_STATUS_LABELS[order.status] || order.status}
                 </span>
               </div>
-
               <div className="space-y-1.5">
                 {order.items.map((item, idx) => (
                   <div key={idx} className="flex justify-between text-sm">
-                    <span className="text-slate-600">
-                      {item.product_name} × {item.quantity}
-                    </span>
-                    <span className="text-slate-500">
-                      {formatPrice(item.product_price * item.quantity)}
-                    </span>
+                    <span className="text-slate-600">{item.product_name} × {item.quantity}</span>
+                    <span className="text-slate-500">{formatPrice(item.product_price * item.quantity)}</span>
                   </div>
                 ))}
               </div>
-
               <div className="flex justify-between items-center mt-3 pt-3 border-t border-slate-100">
                 <span className="text-sm text-slate-500">총 결제금액</span>
-                <span className="text-base font-bold text-brand-600">
-                  {formatPrice(order.total)}
-                </span>
+                <span className="text-base font-bold text-brand-600">{formatPrice(order.total)}</span>
               </div>
             </div>
           ))}
         </div>
       )}
     </div>
+  );
+}
+
+export default function MyPage() {
+  return (
+    <Suspense fallback={<div className="container-app py-16 text-center text-slate-400">로딩중...</div>}>
+      <MyPageContent />
+    </Suspense>
   );
 }

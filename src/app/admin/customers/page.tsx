@@ -48,7 +48,7 @@ export default async function AdminCustomersPage() {
               </tr>
             </thead>
             <tbody>
-              {(subscribers || []).map((sub) => {
+              {((subscribers || []) as any[]).map((sub: any) => {
                 const stats = statsMap.get(sub.email) || { count: 0, total: 0 };
                 return (
                   <tr key={sub.id} className="border-b border-slate-50">

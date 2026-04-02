@@ -115,7 +115,7 @@ export default async function AdminDashboard() {
               </tr>
             </thead>
             <tbody>
-              {(recentOrders || []).map((order) => (
+              {((recentOrders || []) as any[]).map((order: any) => (
                 <tr key={order.id} className="border-b border-slate-50 hover:bg-slate-25">
                   <td className="px-6 py-3">
                     <Link

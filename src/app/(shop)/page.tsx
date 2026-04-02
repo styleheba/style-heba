@@ -48,7 +48,7 @@ export default async function HomePage() {
     .select('*')
     .in('key', ['hero', 'announcement']);
 
-  const hero = (settings || []).find((s: any) => s.key === 'hero')?.value as Record<string, string> | undefined;
+  const hero = ((settings || []) as any[]).find((s) => s.key === 'hero')?.value as Record<string, string> | undefined;
 
   return (
     <>
@@ -76,11 +76,11 @@ export default async function HomePage() {
         <section className="container-app py-12">
           <h3 className="text-2xl font-bold text-slate-900 mb-6">진행중인 공구 </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {activeGroupBuys.map((gb) => (
+            {(activeGroupBuys as any[]).map((gb: any) => (
               <GroupBuyBanner
                 key={gb.id}
                 groupBuy={gb}
-                products={(groupBuyProducts || []).filter((p) => p.group_buy_id === gb.id)}
+                products={((groupBuyProducts || []) as any[]).filter((p: any) => p.group_buy_id === gb.id)}
               />
             ))}
           </div>
@@ -99,7 +99,7 @@ export default async function HomePage() {
             </Link>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
-            {featuredProducts.map((product) => (
+            {(featuredProducts as any[]).map((product: any) => (
               <ProductCard key={product.id} product={product} />
             ))}
           </div>

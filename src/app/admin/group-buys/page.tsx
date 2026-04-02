@@ -64,7 +64,7 @@ export default async function AdminGroupBuysPage() {
 
       {/* Active / Upcoming first */}
       <div className="grid gap-4">
-        {(groupBuys || []).map((gb) => {
+        {(groupBuys || []).map((gb: any) => {
           const stats = gbStats.get(gb.id) || { count: 0, sold: 0, slots: 0 };
           const percent = stats.slots > 0 ? Math.round((stats.sold / stats.slots) * 100) : 0;
           const isLive = gb.status === 'active';

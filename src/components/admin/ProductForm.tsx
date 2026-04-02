@@ -388,7 +388,7 @@ export default function ProductForm({ product, groupBuys = [] }: ProductFormProp
                 <div><label className="text-sm font-medium text-slate-700 mb-1 block">공구 라운드 연결</label>
                   <select value={groupBuyId} onChange={(e) => setGroupBuyId(e.target.value)} className="input-base">
                     <option value="">연결 안함</option>
-                    {groupBuys.map((gb) => (<option key={gb.id} value={gb.id}>{gb.title_ko || gb.title} ({gb.status})</option>))}
+                    {groupBuys.map((gb: any) => (<option key={gb.id} value={gb.id}>{gb.title_ko || gb.title} ({gb.status})</option>))}
                   </select>
                 </div>
               )}
