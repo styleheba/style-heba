@@ -20,18 +20,18 @@ export async function PATCH(request: NextRequest) {
     }
 
     // Send email for specific status changes
-    if (status === 'preparing' || status === 'ready_pickup') {
+    if (status === 'paid' || status === 'ready_pickup') {
       try {
         await sendStatusUpdateEmail(
           customerEmail,
           orderNumber,
-          status as 'preparing' | 'ready_pickup',
+          status as 'paid' | 'ready_pickup',
           customerName
         );
 
         await supabase.from('email_logs').insert({
           recipient_email: customerEmail,
-          email_type: status === 'preparing' ? 'preparing' : 'ready_pickup',
+          email_type: status === 'paid' ? 'paid' : 'ready_pickup',
           subject: `[Style Heba] 주문 상태 업데이트 - ${orderNumber}`,
           order_id: orderId,
           status: 'sent',
