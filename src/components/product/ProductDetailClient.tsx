@@ -11,7 +11,6 @@ import {
 } from '@/lib/utils';
 import type { Product, GroupBuy } from '@/lib/database.types';
 
-// ── 옵션 타입 (ProductOptions.tsx와 동일) ──────────────────
 interface ColorOption   { name: string; code: string; }
 interface PackageOption { label: string; price: string; originalPrice: string; }
 interface SizeOption    { value: string; }
@@ -33,42 +32,35 @@ interface Props {
 }
 
 export default function ProductDetailClient({ product }: Props) {
-  const [selectedImage, setSelectedImage]   = useState(0);
-  const [quantity, setQuantity]             = useState(1);
-  const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>({});
-  const [activeTab, setActiveTab]           = useState('description');
-  const addItem    = useCartStore((s) => s.addItem);
+  const [selectedImage, setSelectedImage] = useState(0);
+  const [quantity, setQuantity] = useState(1);
+  const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>({ package: '단품' });
+  const [activeTab, setActiveTab] = useState('description');
+  const addItem = useCartStore((s) => s.addItem);
   const setCartOpen = useCartStore((s) => s.setCartOpen);
 
-  const images       = product.images?.length ? product.images : [product.thumbnail];
+  const images = product.images?.length ? product.images : [product.thumbnail];
   const slotsPercent = getSlotPercentage(product.sold_count, product.total_slots);
   const remainingSlots = product.total_slots - product.sold_count;
-  const groupBuy     = product.group_buys;
-  const detailTabs   = (product.detail_tabs || {}) as DetailTabs;
+  const groupBuy = product.group_buys;
+  const detailTabs = (product.detail_tabs || {}) as DetailTabs;
 
-  // ── 옵션 파싱 ──────────────────────────────────────────
-  const colors: ColorOption[]     = Array.isArray(detailTabs.colors)   ? detailTabs.colors   : [];
+  const colors: ColorOption[] = Array.isArray(detailTabs.colors) ? detailTabs.colors : [];
   const packages: PackageOption[] = Array.isArray(detailTabs.packages) ? detailTabs.packages : [];
-  const sizes: SizeOption[]       = Array.isArray(detailTabs.sizes)    ? detailTabs.sizes    : [];
+  const sizes: SizeOption[] = Array.isArray(detailTabs.sizes) ? detailTabs.sizes : [];
 
-  // 선택된 패키지의 가격 (없으면 기본 상품가)
   const selectedPkg = packages.find((p) => p.label === selectedOptions.package);
   const effectivePrice = selectedPkg ? parseFloat(selectedPkg.price) || product.price : product.price;
   const effectiveOriginal = selectedPkg
     ? parseFloat(selectedPkg.originalPrice) || product.original_price
     : product.original_price;
 
-  // ── 유효성 검사 ──────────────────────────────────────
   const handleAddToCart = () => {
     if (colors.length > 0 && !selectedOptions.color) {
       toast.error('컬러를 선택해주세요'); return;
     }
     if (sizes.length > 0 && !selectedOptions.size) {
       toast.error('사이즈를 선택해주세요'); return;
-    }
-    // 패키지가 있으면 선택 필수
-    if (packages.length > 0 && !selectedOptions.package) {
-      toast.error('옵션을 선택해주세요'); return;
     }
 
     addItem({
@@ -89,13 +81,11 @@ export default function ProductDetailClient({ product }: Props) {
     setCartOpen(true);
   };
 
-  // 상세정보 탭에 보여줄 key (옵션 관련 키 제외)
   const excludedKeys = ['colors', 'packages', 'sizes', 'sizeType'];
   const detailEntries = Object.entries(detailTabs).filter(([k]) => !excludedKeys.includes(k));
 
   return (
     <div className="container-app py-6">
-      {/* Back */}
       <Link
         href={product.product_type === 'preorder' ? '/preorder' : '/shop'}
         className="inline-flex items-center gap-1 text-sm text-slate-500 hover:text-slate-700 mb-6"
@@ -105,8 +95,6 @@ export default function ProductDetailClient({ product }: Props) {
       </Link>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
-
-        {/* ── 이미지 갤러리 ── */}
         <div>
           <div className="aspect-square rounded-2xl overflow-hidden bg-slate-100">
             <img
@@ -133,9 +121,7 @@ export default function ProductDetailClient({ product }: Props) {
           )}
         </div>
 
-        {/* ── 상품 정보 ── */}
         <div>
-          {/* 카테고리 & 타입 */}
           <div className="flex items-center gap-2 mb-3">
             <span className="badge-brand">{CATEGORY_LABELS[product.category]}</span>
             {product.product_type === 'preorder' && (
@@ -147,16 +133,11 @@ export default function ProductDetailClient({ product }: Props) {
             {product.name_ko || product.name}
           </h1>
 
-          {/* 가격 */}
           <div className="flex items-baseline gap-3 mt-4">
-            <span className="text-3xl font-bold text-brand-600">
-              {formatPrice(effectivePrice)}
-            </span>
+            <span className="text-3xl font-bold text-brand-600">{formatPrice(effectivePrice)}</span>
             {effectiveOriginal && effectiveOriginal > effectivePrice && (
               <>
-                <span className="text-lg text-slate-400 line-through">
-                  {formatPrice(effectiveOriginal)}
-                </span>
+                <span className="text-lg text-slate-400 line-through">{formatPrice(effectiveOriginal)}</span>
                 <span className="badge bg-red-100 text-red-600">
                   {Math.round(((effectiveOriginal - effectivePrice) / effectiveOriginal) * 100)}% OFF
                 </span>
@@ -164,12 +145,9 @@ export default function ProductDetailClient({ product }: Props) {
             )}
           </div>
 
-          {/* 공구 정보 */}
           {groupBuy && (
             <div className="mt-4 p-4 rounded-xl bg-brand-50 border border-brand-100">
-              <p className="text-sm font-semibold text-brand-700">
-                {groupBuy.title_ko || groupBuy.title}
-              </p>
+              <p className="text-sm font-semibold text-brand-700">{groupBuy.title_ko || groupBuy.title}</p>
               <p className="text-xs text-brand-500 mt-1">
                 {groupBuy.status === 'active'
                   ? `마감까지 ${getTimeRemaining(groupBuy.close_at)}`
@@ -178,7 +156,6 @@ export default function ProductDetailClient({ product }: Props) {
             </div>
           )}
 
-          {/* 슬롯 진행률 */}
           {product.product_type === 'preorder' && (
             <div className="mt-4">
               <div className="flex justify-between text-sm mb-1.5">
@@ -194,7 +171,7 @@ export default function ProductDetailClient({ product }: Props) {
             </div>
           )}
 
-          {/* ── 컬러 옵션 ── */}
+          {/* 컬러 옵션 */}
           {colors.length > 0 && (
             <div className="mt-6">
               <label className="text-sm font-medium text-slate-700 mb-2 flex items-center gap-2">
@@ -217,17 +194,16 @@ export default function ProductDetailClient({ product }: Props) {
                     )}
                     style={{ backgroundColor: color.code }}
                   >
-                    {/* 흰색 계열은 구분선 */}
-                    {color.code === '#FFFFFF' || color.code === '#FFFFF0' || color.code === '#FFFDD0' ? (
+                    {(color.code === '#FFFFFF' || color.code === '#FFFFF0' || color.code === '#FFFDD0') && (
                       <span className="absolute inset-0 rounded-full border border-slate-200" />
-                    ) : null}
+                    )}
                   </button>
                 ))}
               </div>
             </div>
           )}
 
-          {/* ── 사이즈 옵션 ── */}
+          {/* 사이즈 옵션 */}
           {sizes.length > 0 && (
             <div className="mt-6">
               <label className="text-sm font-medium text-slate-700 mb-2 block">사이즈</label>
@@ -250,21 +226,16 @@ export default function ProductDetailClient({ product }: Props) {
             </div>
           )}
 
-          {/* ── 패키지 옵션 ── */}
+          {/* 패키지 옵션 */}
           {packages.length > 0 && (
             <div className="mt-6">
               <label className="text-sm font-medium text-slate-700 mb-2 block">옵션 선택</label>
               <div className="space-y-2">
-                {/* 기본 단품 */}
                 <button
-                  onClick={() => setSelectedOptions((prev) => {
-                    const next = { ...prev };
-                    delete next.package = '단품';
-                    return next;
-                  })}
+                  onClick={() => setSelectedOptions((prev) => ({ ...prev, package: '단품' }))}
                   className={cn(
                     'w-full flex items-center justify-between px-4 py-3 rounded-xl border-2 text-sm transition-all',
-                    !selectedOptions.package === '단품'
+                    selectedOptions.package === '단품'
                       ? 'border-brand-500 bg-brand-50'
                       : 'border-slate-200 hover:border-slate-300'
                   )}
@@ -279,7 +250,6 @@ export default function ProductDetailClient({ product }: Props) {
                   const discount = pkgOriginal > pkgPrice
                     ? Math.round(((pkgOriginal - pkgPrice) / pkgOriginal) * 100)
                     : 0;
-                  const isSelected = selectedOptions.package === pkg.label;
 
                   return (
                     <button
@@ -287,7 +257,7 @@ export default function ProductDetailClient({ product }: Props) {
                       onClick={() => setSelectedOptions((prev) => ({ ...prev, package: pkg.label }))}
                       className={cn(
                         'w-full flex items-center justify-between px-4 py-3 rounded-xl border-2 text-sm transition-all',
-                        isSelected
+                        selectedOptions.package === pkg.label
                           ? 'border-brand-500 bg-brand-50'
                           : 'border-slate-200 hover:border-slate-300'
                       )}
@@ -303,9 +273,7 @@ export default function ProductDetailClient({ product }: Props) {
                       <div className="text-right">
                         <span className="font-bold text-slate-900">{formatPrice(pkgPrice)}</span>
                         {pkgOriginal > pkgPrice && (
-                          <span className="text-xs text-slate-400 line-through ml-2">
-                            {formatPrice(pkgOriginal)}
-                          </span>
+                          <span className="text-xs text-slate-400 line-through ml-2">{formatPrice(pkgOriginal)}</span>
                         )}
                       </div>
                     </button>
@@ -315,29 +283,18 @@ export default function ProductDetailClient({ product }: Props) {
             </div>
           )}
 
-          {/* ── 수량 & 장바구니 ── */}
+          {/* 수량 & 장바구니 */}
           <div className="mt-6 flex items-center gap-3">
             <div className="flex items-center border border-slate-200 rounded-lg">
-              <button
-                onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                className="w-10 h-10 flex items-center justify-center hover:bg-slate-50 transition-colors"
-              >
+              <button onClick={() => setQuantity(Math.max(1, quantity - 1))} className="w-10 h-10 flex items-center justify-center hover:bg-slate-50 transition-colors">
                 <Minus className="w-4 h-4" />
               </button>
               <span className="w-10 text-center text-sm font-medium">{quantity}</span>
-              <button
-                onClick={() => setQuantity(quantity + 1)}
-                className="w-10 h-10 flex items-center justify-center hover:bg-slate-50 transition-colors"
-              >
+              <button onClick={() => setQuantity(quantity + 1)} className="w-10 h-10 flex items-center justify-center hover:bg-slate-50 transition-colors">
                 <Plus className="w-4 h-4" />
               </button>
             </div>
-
-            <button
-              onClick={handleAddToCart}
-              disabled={product.status === 'soldout' || remainingSlots <= 0}
-              className="btn-primary flex-1"
-            >
+            <button onClick={handleAddToCart} disabled={product.status === 'soldout' || remainingSlots <= 0} className="btn-primary flex-1">
               <ShoppingBag className="w-4 h-4 mr-2" />
               {product.status === 'soldout' || remainingSlots <= 0
                 ? '품절'
@@ -345,23 +302,20 @@ export default function ProductDetailClient({ product }: Props) {
             </button>
           </div>
 
-          {/* 배송 안내 */}
           <div className="mt-4 p-3 rounded-lg bg-slate-50 text-xs text-slate-500 space-y-1">
             <p>📦 $150 이상 무료배송 / 미만 $10</p>
             <p>📍 Atlanta, GA 픽업 가능</p>
             <p>💳 Zelle / Venmo 결제</p>
           </div>
 
-          {/* ── 설명 탭 ── */}
+          {/* 설명 탭 */}
           <div className="mt-8 border-t border-slate-100 pt-6">
             <div className="flex gap-1 border-b border-slate-100">
               <button
                 onClick={() => setActiveTab('description')}
                 className={cn(
                   'px-4 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-px',
-                  activeTab === 'description'
-                    ? 'border-brand-500 text-brand-600'
-                    : 'border-transparent text-slate-400 hover:text-slate-600'
+                  activeTab === 'description' ? 'border-brand-500 text-brand-600' : 'border-transparent text-slate-400 hover:text-slate-600'
                 )}
               >
                 상품설명
@@ -371,24 +325,16 @@ export default function ProductDetailClient({ product }: Props) {
                   onClick={() => setActiveTab('details')}
                   className={cn(
                     'px-4 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-px',
-                    activeTab === 'details'
-                      ? 'border-brand-500 text-brand-600'
-                      : 'border-transparent text-slate-400 hover:text-slate-600'
+                    activeTab === 'details' ? 'border-brand-500 text-brand-600' : 'border-transparent text-slate-400 hover:text-slate-600'
                   )}
                 >
                   상세정보
                 </button>
               )}
             </div>
-
             <div className="py-4 text-sm text-slate-600 leading-relaxed">
               {activeTab === 'description' && (
-                <div
-                  className="prose prose-sm max-w-none"
-                  dangerouslySetInnerHTML={{
-                    __html: product.description_ko || product.description || '상품 설명이 없습니다.',
-                  }}
-                />
+                <div className="prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: product.description_ko || product.description || '상품 설명이 없습니다.' }} />
               )}
               {activeTab === 'details' && (
                 <div className="space-y-3">
