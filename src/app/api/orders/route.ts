@@ -2,6 +2,11 @@ export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 import { createServiceSupabase } from '@/lib/supabase/server';
 import { sendOrderConfirmationEmail } from '@/lib/email';
+import { Resend } from 'resend';
+
+const resend = new Resend(process.env.RESEND_API_KEY || 'placeholder');
+const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || 'hello@styleheba.com';
+const ADMIN_EMAIL = 'jamie@hebajewelryinc.com';
 
 export async function POST(request: NextRequest) {
   try {
@@ -53,6 +58,7 @@ export async function POST(request: NextRequest) {
 
     await supabase.from('order_items').insert(orderItems);
 
+    // 1. 고객에게 주문확인 이메일
     try {
       await sendOrderConfirmationEmail(customer_email, {
         orderNumber: order.order_number,
@@ -72,7 +78,38 @@ export async function POST(request: NextRequest) {
         status: 'sent',
       });
     } catch (emailErr) {
-      console.error('Email send error:', emailErr);
+      console.error('Customer email error:', emailErr);
+    }
+
+    // 2. 관리자에게 주문 알림 이메일
+    try {
+      const itemList = items.map((item: any) => `${item.product_name} × ${item.quantity}`).join('\n');
+      await resend.emails.send({
+        from: `Style Heba <${FROM_EMAIL}>`,
+        to: ADMIN_EMAIL,
+        subject: `[새 주문] ${order.order_number} - ${customer_name}`,
+        html: `
+          <h2>새 주문이 접수되었습니다!</h2>
+          <p><strong>주문번호:</strong> ${order.order_number}</p>
+          <p><strong>고객:</strong> ${customer_name} (${customer_email})</p>
+          <p><strong>전화:</strong> ${customer_phone || '미입력'}</p>
+          <p><strong>결제:</strong> ${payment_method.toUpperCase()}</p>
+          <p><strong>수령:</strong> ${fulfillment_type === 'pickup' ? '픽업' : '배송'}</p>
+          <hr />
+          <p><strong>주문 상품:</strong></p>
+          <pre>${itemList}</pre>
+          <hr />
+          <p><strong>소계:</strong> $${subtotal.toFixed(2)}</p>
+          ${shipping_fee > 0 ? `<p><strong>배송비:</strong> $${shipping_fee.toFixed(2)}</p>` : ''}
+          ${discount_amount > 0 ? `<p><strong>할인:</strong> -$${discount_amount.toFixed(2)}</p>` : ''}
+          <p><strong>합계:</strong> $${total.toFixed(2)}</p>
+          ${customer_note ? `<hr /><p><strong>고객 메모:</strong> ${customer_note}</p>` : ''}
+          <hr />
+          <p><a href="https://styleheba.com/admin/orders">주문 관리 바로가기</a></p>
+        `,
+      });
+    } catch (adminEmailErr) {
+      console.error('Admin email error:', adminEmailErr);
     }
 
     return NextResponse.json({ order_id: order.id, order_number: order.order_number });
