@@ -91,7 +91,7 @@ export default function HeroSlideshow({ products, hero }: HeroSlideshowProps) {
           {/* Left: CTA Buttons */}
           <div className="flex gap-2">
             <Link href="/preorder" className="btn-primary text-sm px-5 py-2.5 shadow-lg shadow-brand-500/20">
-              공구 보러가기
+              공구 보기
               <ArrowRight className="w-3.5 h-3.5 ml-1.5" />
             </Link>
             <Link href="/shop" className="btn-secondary text-sm px-5 py-2.5 bg-white/70 backdrop-blur-sm">
