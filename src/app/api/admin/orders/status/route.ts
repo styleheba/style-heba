@@ -1,39 +1,47 @@
 export const dynamic = 'force-dynamic';
-import { createServerClient } from '@supabase/ssr';
-import { cookies } from 'next/headers';
+import { NextRequest, NextResponse } from 'next/server';
+import { createServiceSupabase } from '@/lib/supabase/server';
+import { sendStatusUpdateEmail } from '@/lib/email';
 
-export function createServerSupabase() {
-  const cookieStore = cookies();
+export async function PATCH(request: NextRequest) {
+  try {
+    const { orderId, status, customerEmail, customerName, orderNumber } =
+      await request.json();
 
-  return createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return cookieStore.getAll();
-        },
-        setAll(cookiesToSet: any) {
-          try {
-            cookiesToSet.forEach(({ name, value, options }: any) =>
-              cookieStore.set(name, value, options)
-            );
-          } catch {}
-        },
-      },
+    const supabase = createServiceSupabase();
+
+    const { error } = await supabase
+      .from('orders')
+      .update({ status })
+      .eq('id', orderId);
+
+    if (error) {
+      return NextResponse.json({ error: '상태 변경 실패' }, { status: 500 });
     }
-  );
-}
 
-export function createServiceSupabase() {
-  return createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    {
-      cookies: {
-        getAll() { return []; },
-        setAll() {},
-      },
+    if (status === 'paid' || status === 'ready_pickup') {
+      try {
+        await sendStatusUpdateEmail(
+          customerEmail,
+          orderNumber,
+          status as 'paid' | 'ready_pickup',
+          customerName
+        );
+
+        await supabase.from('email_logs').insert({
+          recipient_email: customerEmail,
+          email_type: status === 'paid' ? 'paid' : 'ready_pickup',
+          subject: `[Style Heba] 주문 상태 업데이트 - ${orderNumber}`,
+          order_id: orderId,
+          status: 'sent',
+        });
+      } catch (emailErr) {
+        console.error('Status email error:', emailErr);
+      }
     }
-  );
+
+    return NextResponse.json({ success: true });
+  } catch {
+    return NextResponse.json({ error: '서버 오류' }, { status: 500 });
+  }
 }
