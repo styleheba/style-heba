@@ -259,12 +259,12 @@ export default function ProductDetailClient({ product }: Props) {
                 <button
                   onClick={() => setSelectedOptions((prev) => {
                     const next = { ...prev };
-                    delete next.package;
+                    delete next.package = '단품';
                     return next;
                   })}
                   className={cn(
                     'w-full flex items-center justify-between px-4 py-3 rounded-xl border-2 text-sm transition-all',
-                    !selectedOptions.package
+                    !selectedOptions.package === '단품'
                       ? 'border-brand-500 bg-brand-50'
                       : 'border-slate-200 hover:border-slate-300'
                   )}
