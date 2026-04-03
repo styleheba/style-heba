@@ -13,7 +13,7 @@ export default function ShippingPolicyPage() {
           <p className="text-slate-600 leading-relaxed">
             • $150 이상 주문 시 무료배송<br />
             • $150 미만 주문 시 $10 배송비 부과<br />
-            • 픽업 (Atlanta, GA) 선택 시 배송비 무료
+            • 픽업 (Atlanta, GA) 선택 시 배송비 무료, 픽업 장소 및 시간은 추후 협의
           </p>
         </section>
 
@@ -28,8 +28,8 @@ export default function ShippingPolicyPage() {
           <h2 className="text-xl font-bold text-slate-800">배송 기간</h2>
           <p className="text-slate-600 leading-relaxed">
             • 프리오더 공구: 한국 발주 후 약 2~3주 소요<br />
-            • 바로구매: 입금 확인 후 3~5일 이내 발송<br />
-            • 배송 시작 시 이메일로 안내드립니다
+            • 바로구매: 입금 확인 후 2~3일 이내 발송<br />
+            • 배송 후 별도 안내드립니다
           </p>
         </section>
 
@@ -44,9 +44,9 @@ export default function ShippingPolicyPage() {
           <h2 className="text-xl font-bold text-slate-800">교환 및 반품</h2>
           <p className="text-slate-600 leading-relaxed">
             • 상품 수령 후 7일 이내 교환/반품 가능<br />
-            • 단순 변심에 의한 반품 시 반품 배송비는 고객 부담<br />
+            • 단순 변심에 의한 반품 불가<br />
             • 상품 불량 또는 오배송 시 무료 교환/반품<br />
-            • 교환/반품 문의: jamie@styleheba.com
+            • 교환/반품 문의: jamie@styleheba.com 또는 인스타 DM 으로 문의
           </p>
         </section>
 
