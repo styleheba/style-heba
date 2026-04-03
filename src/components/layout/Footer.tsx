@@ -32,6 +32,9 @@ export default function Footer() {
               <Link href="/mypage" className="text-sm text-slate-500 hover:text-brand-500 transition-colors">
                 마이페이지
               </Link>
+                   <Link href="/shipping-policy" className="text-sm text-slate-500 hover:text-brand-500 transition-colors">
+                Shipping Policy
+              </Link>
             </div>
           </div>
 
