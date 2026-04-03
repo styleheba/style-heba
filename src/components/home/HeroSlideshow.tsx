@@ -65,7 +65,7 @@ export default function HeroSlideshow({ products, hero }: HeroSlideshowProps) {
         <div className="max-w-lg z-10">
           <div className="mb-4">
             <span className="inline-block px-3 py-1 rounded-full text-xs font-semibold bg-brand-500/10 text-brand-600 backdrop-blur-sm border border-brand-200/50">
-              Trusted picks, only whats tredning
+              깐깐한 안목으로 고른 프리미엄 리스트
             </span>
           </div>
 
