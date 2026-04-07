@@ -385,14 +385,22 @@ export default function ProductDetailClient({ product }: Props) {
             </div>
             <div className="py-4 text-sm text-slate-600 leading-relaxed">
               {activeTab === 'description' && (
-                <div className="prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: product.description_ko || product.description || '상품 설명이 없습니다.' }} />
+                <div
+                  className="prose prose-sm max-w-none whitespace-pre-wrap"
+                  dangerouslySetInnerHTML={{
+                    __html: (product.description_ko || product.description || '상품 설명이 없습니다.')
+                      .replace(/\n/g, '<br />'),
+                  }}
+                />
               )}
               {activeTab === 'details' && (
                 <div className="space-y-3">
                   {detailEntries.map(([key, value]) => (
                     <div key={key} className="flex">
                       <span className="w-24 flex-shrink-0 font-medium text-slate-700 capitalize">{key}</span>
-                      <span className="text-slate-500">{value as string}</span>
+                      <span
+                        className="text-slate-500 whitespace-pre-wrap"
+                      >{value as string}</span>
                     </div>
                   ))}
                 </div>
