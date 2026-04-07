@@ -100,7 +100,7 @@ export default function ProductDetailClient({ product }: Props) {
             <img
               src={getStorageUrl(images[selectedImage])}
               alt={product.name_ko || product.name}
-              className="w-full h-full object-cover"
+              className="w-full h-full object-contain"
             />
           </div>
           {images.length > 1 && (
