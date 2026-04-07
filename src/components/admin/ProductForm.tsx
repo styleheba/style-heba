@@ -207,13 +207,13 @@ export default function ProductForm({ product, groupBuys = [] }: ProductFormProp
       const imagePaths = await uploadImages();
       const thumbnailPath = imagePaths[thumbnailIdx] || imagePaths[0] || null;
       const cleanTabs: Record<string, any> = {};
-      Object.entries(detailTabs).forEach(([k, v]) => { if (v && typeof v === 'string' && v.trim()) cleanTabs[k] = v; });
+      Object.entries(detailTabs).forEach(([k, v]) => { if (v && typeof v === 'string' && v.trim()) cleanTabs[k] = v.trim(); });
       if (productOptions.colors.length > 0) cleanTabs.colors = productOptions.colors;
       if (productOptions.packages.length > 0) cleanTabs.packages = productOptions.packages;
       if (productOptions.sizes.length > 0) { cleanTabs.sizes = productOptions.sizes; cleanTabs.sizeType = productOptions.sizeType; }
       const productData = {
         name: name.trim(), name_ko: nameKo.trim() || null, slug: slug.trim(),
-        description: description.replace(/^\s+|\s+$/g, '') || null, description_ko: descriptionKo.replace(/^\s+|\s+$/g, '') || null,
+        description: description.trim() || null, description_ko: descriptionKo.trim() || null,
         price: parseFloat(price), original_price: originalPrice ? parseFloat(originalPrice) : null,
         cost_price: costPrice ? parseFloat(costPrice) : null, product_type: productType, category,
         status: (saveStatus || status) as any, total_slots: parseInt(totalSlots) || 150,
@@ -258,7 +258,7 @@ export default function ProductForm({ product, groupBuys = [] }: ProductFormProp
         <div className="flex items-center gap-2">
           {isEdit && (<Link href={`/${productType === 'preorder' ? 'preorder' : 'shop'}/${slug}`} target="_blank" className="btn-ghost text-sm"><Eye className="w-4 h-4 mr-1" />미리보기</Link>)}
           <button onClick={() => handleSave('draft')} disabled={saving} className="btn-ghost text-sm">초안 저장</button>
-          <button onClick={() => handleSave('active')} disabled={saving} className="btn-primary">
+          <button onClick={() => handleSave()} disabled={saving} className="btn-primary">
             {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
             {uploadProgress || (saving ? '저장 중...' : '저장 및 게시')}
           </button>
@@ -284,8 +284,8 @@ export default function ProductForm({ product, groupBuys = [] }: ProductFormProp
                   <input type="text" value={slug} onChange={(e) => { setAutoSlug(false); setSlug(e.target.value); }} placeholder="product-slug" className="input-base" disabled={autoSlug} />
                 </div>
               </div>
-              <div><label className="text-sm font-medium text-slate-700 mb-1 block">상품 설명 (한국어)</label><textarea value={descriptionKo} onChange={(e) => setDescriptionKo(e.target.value)} className="input-base h-32 resize-y whitespace-pre-wrap" placeholder="고객에게 보여지는 상세 설명... (HTML 가능)" /></div>
-              <div><label className="text-sm font-medium text-slate-700 mb-1 block">상품 설명 (영문)</label><textarea value={description} onChange={(e) => setDescription(e.target.value)} className="input-base h-20 resize-y whitespace-pre-wrap" placeholder="English description (optional)" /></div>
+              <div><label className="text-sm font-medium text-slate-700 mb-1 block">상품 설명 (한국어)</label><textarea value={descriptionKo} onChange={(e) => setDescriptionKo(e.target.value)} className="input-base h-32 resize-y" placeholder="고객에게 보여지는 상세 설명... (HTML 가능)" /></div>
+              <div><label className="text-sm font-medium text-slate-700 mb-1 block">상품 설명 (영문)</label><textarea value={description} onChange={(e) => setDescription(e.target.value)} className="input-base h-20 resize-y" placeholder="English description (optional)" /></div>
             </div>
           </div>
 
@@ -324,7 +324,7 @@ export default function ProductForm({ product, groupBuys = [] }: ProductFormProp
                 <div key={field.key}>
                   <label className="text-sm font-medium text-slate-700 mb-1 block">{field.label}</label>
                   {field.type === 'textarea' ? (
-                    <textarea value={detailTabs[field.key] || ''} onChange={(e) => updateDetailTab(field.key, e.target.value)} placeholder={field.placeholder} className="input-base h-20 resize-y whitespace-pre-wrap" />
+                    <textarea value={detailTabs[field.key] || ''} onChange={(e) => updateDetailTab(field.key, e.target.value)} placeholder={field.placeholder} className="input-base h-20 resize-y" />
                   ) : (
                     <input type="text" value={detailTabs[field.key] || ''} onChange={(e) => updateDetailTab(field.key, e.target.value)} placeholder={field.placeholder} className="input-base" />
                   )}
