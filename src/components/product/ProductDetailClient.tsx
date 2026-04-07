@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { ArrowLeft, ShoppingBag, Minus, Plus } from 'lucide-react';
+import { useState, useRef } from 'react';
+import { ArrowLeft, ShoppingBag, Minus, Plus, ChevronLeft, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
 import { useCartStore } from '@/lib/store/cart';
@@ -33,6 +33,20 @@ interface Props {
 
 export default function ProductDetailClient({ product }: Props) {
   const [selectedImage, setSelectedImage] = useState(0);
+  const touchStartX = useRef<number | null>(null);
+  const touchEndX = useRef<number | null>(null);
+
+  const goPrev = () => setSelectedImage((i) => (i > 0 ? i - 1 : images.length - 1));
+  const goNext = () => setSelectedImage((i) => (i < images.length - 1 ? i + 1 : 0));
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+  };
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    touchEndX.current = e.changedTouches[0].clientX;
+    const diff = (touchStartX.current ?? 0) - (touchEndX.current ?? 0);
+    if (Math.abs(diff) > 40) diff > 0 ? goNext() : goPrev();
+  };
   const [quantity, setQuantity] = useState(1);
   const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>({ package: '단품' });
   const [activeTab, setActiveTab] = useState('description');
@@ -96,12 +110,49 @@ export default function ProductDetailClient({ product }: Props) {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
         <div>
-          <div className="rounded-2xl overflow-hidden bg-slate-100 flex items-center justify-center">
+          <div className="relative rounded-2xl overflow-hidden bg-slate-100 select-none"
+            onTouchStart={handleTouchStart}
+            onTouchEnd={handleTouchEnd}
+          >
             <img
               src={getStorageUrl(images[selectedImage])}
               alt={product.name_ko || product.name}
               className="w-full h-auto block"
             />
+
+            {/* 좌우 화살표 (이미지 2장 이상일 때만) */}
+            {images.length > 1 && (
+              <>
+                <button
+                  onClick={goPrev}
+                  className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/80 backdrop-blur-sm shadow flex items-center justify-center hover:bg-white transition-colors"
+                >
+                  <ChevronLeft className="w-4 h-4 text-slate-700" />
+                </button>
+                <button
+                  onClick={goNext}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/80 backdrop-blur-sm shadow flex items-center justify-center hover:bg-white transition-colors"
+                >
+                  <ChevronRight className="w-4 h-4 text-slate-700" />
+                </button>
+
+                {/* 점 인디케이터 */}
+                <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5">
+                  {images.map((_, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => setSelectedImage(idx)}
+                      className={cn(
+                        'rounded-full transition-all',
+                        idx === selectedImage
+                          ? 'w-4 h-1.5 bg-white'
+                          : 'w-1.5 h-1.5 bg-white/50'
+                      )}
+                    />
+                  ))}
+                </div>
+              </>
+            )}
           </div>
           {images.length > 1 && (
             <div className="flex gap-2 mt-3 overflow-x-auto scrollbar-hide">
