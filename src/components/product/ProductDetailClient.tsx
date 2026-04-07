@@ -96,11 +96,11 @@ export default function ProductDetailClient({ product }: Props) {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
         <div>
-          <div className="aspect-square rounded-2xl overflow-hidden bg-slate-100">
+          <div className="rounded-2xl overflow-hidden bg-slate-100 flex items-center justify-center">
             <img
               src={getStorageUrl(images[selectedImage])}
               alt={product.name_ko || product.name}
-              className="w-full h-full object-contain"
+              className="w-full h-auto block"
             />
           </div>
           {images.length > 1 && (

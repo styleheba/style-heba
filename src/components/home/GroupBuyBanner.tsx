@@ -52,7 +52,7 @@ export default function GroupBuyBanner({ groupBuy, products = [] }: GroupBuyBann
           : 'bg-gradient-to-br from-violet-50 via-purple-50 to-fuchsia-50 border border-purple-200'
       )}
     >
-      <div className="flex">
+      <div className="flex items-stretch">
         <div className="flex-1 p-5">
           <span
             className={cn(
@@ -117,21 +117,21 @@ export default function GroupBuyBanner({ groupBuy, products = [] }: GroupBuyBann
         </div>
 
         {previewProducts.length > 0 && (
-          <div className="flex flex-col gap-1 w-36 md:w-44 flex-shrink-0 p-2">
+          <div className="flex flex-col gap-1 p-2 flex-shrink-0" style={{ width: 'fit-content', maxWidth: '160px' }}>
             {previewProducts.map((product) => (
               <div
                 key={product.id}
-                className="flex-1 rounded-xl overflow-hidden"
+                className="rounded-xl overflow-hidden"
               >
                 {product.thumbnail ? (
                   <img
                     src={getStorageUrl(product.thumbnail)}
                     alt={product.name_ko || product.name}
-                    className="w-full h-full object-cover"
+                    className="block w-auto h-auto max-w-[140px] max-h-[120px] object-contain"
                   />
                 ) : (
                   <div className={cn(
-                    'w-full h-full flex items-center justify-center text-xs',
+                    'w-[140px] h-[100px] flex items-center justify-center text-xs',
                     isActive ? 'bg-pink-100 text-pink-400' : 'bg-purple-100 text-purple-400'
                   )}>
                     IMG
