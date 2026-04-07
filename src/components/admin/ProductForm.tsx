@@ -12,6 +12,7 @@ import toast from 'react-hot-toast';
 import { cn, CATEGORY_LABELS, generateSlug, getStorageUrl } from '@/lib/utils';
 import { createClient } from '@/lib/supabase/client';
 import type { Product, GroupBuy } from '@/lib/database.types';
+import { cropImageTo4x5 } from '@/lib/image-utils';
 
 const DETAIL_TAB_FIELDS: Record<string, { key: string; label: string; placeholder: string; type?: 'text' | 'textarea' }[]> = {
   beauty: [
@@ -138,19 +139,41 @@ export default function ProductForm({ product, groupBuys = [] }: ProductFormProp
 
   useEffect(() => { if (autoSlug && name) setSlug(generateSlug(name)); }, [name, autoSlug]);
 
-  const handleImageSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageSelect = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     if (files.length === 0) return;
+    
     const maxTotal = 10;
     const allowed = maxTotal - images.length;
     const toAdd = files.slice(0, allowed);
-    if (toAdd.length < files.length) toast.error(`최대 ${maxTotal}장까지 업로드 가능합니다`);
-    const newImages: ImageItem[] = toAdd.map((file) => ({
-      id: `new-${Date.now()}-${Math.random().toString(36).slice(2)}`,
-      url: URL.createObjectURL(file), file, isNew: true,
-    }));
-    setImages((prev) => [...prev, ...newImages]);
-    if (fileInputRef.current) fileInputRef.current.value = '';
+    
+    if (toAdd.length < files.length) {
+      toast.error(`최대 ${maxTotal}장까지 업로드 가능합니다`);
+    }
+
+    // 이미지를 4:5 비율로 자동 크롭
+    toast.loading('이미지를 4:5 비율로 조정 중...', { id: 'crop' });
+    
+    try {
+      const croppedFiles = await Promise.all(
+        toAdd.map(file => cropImageTo4x5(file, { quality: 0.9 }))
+      );
+      
+      const newImages: ImageItem[] = croppedFiles.map((file) => ({
+        id: `new-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+        url: URL.createObjectURL(file),
+        file,
+        isNew: true,
+      }));
+      
+      setImages((prev) => [...prev, ...newImages]);
+      toast.success('이미지가 1080x1350px (4:5)로 조정되었습니다', { id: 'crop' });
+    } catch (error) {
+      console.error('이미지 크롭 오류:', error);
+      toast.error('이미지 처리 중 오류가 발생했습니다', { id: 'crop' });
+    } finally {
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
   }, [images.length]);
 
   const removeImage = (idx: number) => {
@@ -294,8 +317,9 @@ export default function ProductForm({ product, groupBuys = [] }: ProductFormProp
             <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3">
               {images.map((img, idx) => (
                 <div key={img.id} draggable onDragStart={() => handleDragStart(idx)} onDragOver={(e) => handleDragOver(e, idx)} onDragEnd={handleDragEnd}
-                  className={cn('relative group aspect-square rounded-xl overflow-hidden border-2 cursor-grab active:cursor-grabbing transition-all',
-                    thumbnailIdx === idx ? 'border-brand-500 ring-2 ring-brand-200' : 'border-slate-200 hover:border-slate-300', dragIdx === idx && 'opacity-50 scale-95')}>
+                  className={cn('relative group rounded-xl overflow-hidden border-2 cursor-grab active:cursor-grabbing transition-all',
+                    thumbnailIdx === idx ? 'border-brand-500 ring-2 ring-brand-200' : 'border-slate-200 hover:border-slate-300', dragIdx === idx && 'opacity-50 scale-95')}
+                  style={{ aspectRatio: '4/5' }}>
                   <img src={img.url} alt="" className="w-full h-full object-cover" draggable={false} />
                   {thumbnailIdx === idx && <div className="absolute top-1.5 left-1.5 bg-brand-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-md">대표</div>}
                   <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all flex items-center justify-center gap-1.5 opacity-0 group-hover:opacity-100">
@@ -307,13 +331,13 @@ export default function ProductForm({ product, groupBuys = [] }: ProductFormProp
                 </div>
               ))}
               {images.length < 10 && (
-                <button type="button" onClick={() => fileInputRef.current?.click()} className="aspect-square rounded-xl border-2 border-dashed border-slate-300 hover:border-brand-400 hover:bg-brand-50/50 transition-all flex flex-col items-center justify-center gap-1">
+                <button type="button" onClick={() => fileInputRef.current?.click()} className="rounded-xl border-2 border-dashed border-slate-300 hover:border-brand-400 hover:bg-brand-50/50 transition-all flex flex-col items-center justify-center gap-1" style={{ aspectRatio: '4/5' }}>
                   <ImagePlus className="w-6 h-6 text-slate-400" /><span className="text-[11px] text-slate-400">추가</span>
                 </button>
               )}
             </div>
             <input ref={fileInputRef} type="file" accept="image/*" multiple onChange={handleImageSelect} className="hidden" />
-            <p className="text-xs text-slate-400 mt-3">JPG, PNG, WebP · 최대 5MB · 권장 1:1 비율</p>
+            <p className="text-xs text-slate-400 mt-3">📸 JPG, PNG, WebP · 최대 5MB · <strong>4:5 비율 (인스타그램 피드)</strong> · 권장 1080x1350px</p>
           </div>
 
           <div className="card p-6">

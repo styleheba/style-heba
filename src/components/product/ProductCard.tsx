@@ -18,8 +18,8 @@ export default function ProductCard({ product }: ProductCardProps) {
 
   return (
     <Link href={href} className="product-card group">
-      {/* Image */}
-      <div className="relative aspect-square overflow-hidden bg-slate-100">
+      {/* Image - 4:5 비율 (인스타그램 피드) */}
+      <div className="relative overflow-hidden bg-slate-100" style={{ aspectRatio: '4/5' }}>
         <img
           src={getStorageUrl(product.thumbnail)}
           alt={product.name_ko || product.name}
