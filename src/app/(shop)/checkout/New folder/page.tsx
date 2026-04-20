@@ -8,7 +8,6 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useCartStore } from '@/lib/store/cart';
-import { createClient } from '@/lib/supabase/client';
 import {
   cn, formatPrice, getStorageUrl, calculateShippingFee,
   calculateNewCustomerDiscount, calculateOrderTotal, SHIPPING,
@@ -18,7 +17,6 @@ export default function CheckoutPage() {
   const router = useRouter();
   const { items, getSubtotal, clearCart } = useCartStore();
   const subtotal = getSubtotal();
-  const supabase = createClient();
 
   const [form, setForm] = useState({
     customer_name: '', customer_email: '', customer_phone: '',
@@ -48,38 +46,14 @@ export default function CheckoutPage() {
     }
   }, []);
 
-  const [isFirstOrder, setIsFirstOrder] = useState(false);
-  const [checkingFirst, setCheckingFirst] = useState(false);
+  const [isFirstOrder] = useState(true);
   const [loading, setLoading] = useState(false);
   const [orderComplete, setOrderComplete] = useState<string | null>(null);
 
+  // Payment notification state
   const [senderName, setSenderName] = useState('');
   const [notifySending, setNotifySending] = useState(false);
   const [notifySent, setNotifySent] = useState(false);
-
-  // 이메일 입력 시 첫 주문 여부 자동 체크
-  useEffect(() => {
-    const email = form.customer_email.trim();
-    if (!email || !email.includes('@')) {
-      setIsFirstOrder(false);
-      return;
-    }
-    const timer = setTimeout(async () => {
-      setCheckingFirst(true);
-      try {
-        const { count } = await supabase
-          .from('orders')
-          .select('id', { count: 'exact', head: true })
-          .eq('customer_email', email)
-          .not('status', 'in', '("cancelled","refunded")');
-        setIsFirstOrder(count === 0);
-      } catch {
-        setIsFirstOrder(false);
-      }
-      setCheckingFirst(false);
-    }, 500);
-    return () => clearTimeout(timer);
-  }, [form.customer_email]);
 
   const shippingFee = calculateShippingFee(subtotal, form.fulfillment_type);
   const discount = calculateNewCustomerDiscount(subtotal, isFirstOrder);
@@ -102,7 +76,7 @@ export default function CheckoutPage() {
       const res = await fetch('/api/orders', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          ...form, is_first_order: isFirstOrder,
+          ...form,
           items: items.map((item) => ({
             product_id: item.product.id, product_name: item.product.name_ko || item.product.name,
             product_image: item.product.thumbnail, product_price: item.product.price,
@@ -125,8 +99,10 @@ export default function CheckoutPage() {
       const res = await fetch('/api/payment-notify', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          orderNumber: orderComplete, customerName: form.customer_name,
-          customerEmail: form.customer_email, senderName: senderName || form.customer_name,
+          orderNumber: orderComplete,
+          customerName: form.customer_name,
+          customerEmail: form.customer_email,
+          senderName: senderName || form.customer_name,
           paymentMethod: form.payment_method,
         }),
       });
@@ -136,6 +112,7 @@ export default function CheckoutPage() {
     finally { setNotifySending(false); }
   };
 
+  // Order Complete Screen
   if (orderComplete) {
     return (
       <div className="container-app py-16 text-center">
@@ -145,25 +122,48 @@ export default function CheckoutPage() {
           </div>
           <h1 className="text-2xl font-bold text-slate-900 mb-2">주문이 완료되었습니다!</h1>
           <p className="text-slate-500 mb-2">주문번호: {orderComplete}</p>
+
+          {/* 입금 안내 */}
           <div className="mt-6 p-4 rounded-xl bg-amber-50 border border-amber-200 text-left">
             <p className="text-sm font-semibold text-amber-800 mb-2">💳 입금 안내</p>
-            <p className="text-sm text-amber-700">{form.payment_method === 'zelle' ? 'Zelle: pay@styleheba.com' : 'Venmo: @styleheba'}</p>
+            <p className="text-sm text-amber-700">
+              {form.payment_method === 'zelle' ? 'Zelle: pay@styleheba.com' : 'Venmo: @styleheba'}
+            </p>
             <p className="text-xs text-amber-600 mt-1">메모에 주문번호 <strong>{orderComplete}</strong>를 적어주세요</p>
           </div>
+
+          {/* 입금 확인 요청 */}
           <div className="mt-4 p-4 rounded-xl bg-brand-50 border border-brand-200 text-left">
             <p className="text-sm font-semibold text-brand-800 mb-2">📢 입금 후 꼭 알려주세요!</p>
-            <p className="text-xs text-brand-600 mb-3">입금 완료 후 아래 버튼을 눌러주시면 빠르게 확인해드립니다.</p>
+            <p className="text-xs text-brand-600 mb-3">
+              입금 완료 후 아래 버튼을 눌러주시면 빠르게 확인해드립니다. 마이페이지에서도 알림을 보낼 수 있습니다.
+            </p>
+
             {notifySent ? (
-              <div className="flex items-center gap-2 text-sm text-emerald-600 font-medium"><Check className="w-4 h-4" /> 입금 확인 요청이 전송되었습니다</div>
+              <div className="flex items-center gap-2 text-sm text-emerald-600 font-medium">
+                <Check className="w-4 h-4" /> 입금 확인 요청이 전송되었습니다
+              </div>
             ) : (
               <div className="space-y-2">
-                <input type="text" value={senderName} onChange={(e) => setSenderName(e.target.value)} placeholder="입금자명 (본인과 다를 경우)" className="input-base text-sm" />
-                <button onClick={handlePaymentNotify} disabled={notifySending} className="btn-primary w-full text-sm">
-                  <Send className="w-4 h-4 mr-2" />{notifySending ? '전송중...' : '입금 완료 알림 보내기'}
+                <input
+                  type="text"
+                  value={senderName}
+                  onChange={(e) => setSenderName(e.target.value)}
+                  placeholder="입금자명 (본인과 다를 경우)"
+                  className="input-base text-sm"
+                />
+                <button
+                  onClick={handlePaymentNotify}
+                  disabled={notifySending}
+                  className="btn-primary w-full text-sm"
+                >
+                  <Send className="w-4 h-4 mr-2" />
+                  {notifySending ? '전송중...' : '입금 완료 알림 보내기'}
                 </button>
               </div>
             )}
           </div>
+
           <div className="mt-8 flex gap-3 justify-center">
             <Link href="/" className="btn-secondary">홈으로</Link>
             <Link href="/mypage" className="btn-primary">주문 확인</Link>
@@ -184,7 +184,9 @@ export default function CheckoutPage() {
 
   return (
     <div className="container-app py-8">
-      <Link href="/" className="inline-flex items-center gap-1 text-sm text-slate-500 hover:text-slate-700 mb-6"><ArrowLeft className="w-4 h-4" />쇼핑 계속하기</Link>
+      <Link href="/" className="inline-flex items-center gap-1 text-sm text-slate-500 hover:text-slate-700 mb-6">
+        <ArrowLeft className="w-4 h-4" />쇼핑 계속하기
+      </Link>
       <h1 className="text-2xl font-bold text-slate-900 mb-8">결제하기</h1>
       <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-5 gap-8">
         <div className="lg:col-span-3 space-y-6">
@@ -192,12 +194,7 @@ export default function CheckoutPage() {
             <h2 className="text-lg font-bold text-slate-900 mb-4">주문자 정보</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div><label className="text-sm font-medium text-slate-700 mb-1 block">이름 *</label><input type="text" value={form.customer_name} onChange={(e) => updateForm('customer_name', e.target.value)} className="input-base" required /></div>
-              <div>
-                <label className="text-sm font-medium text-slate-700 mb-1 block">이메일 *</label>
-                <input type="email" value={form.customer_email} onChange={(e) => updateForm('customer_email', e.target.value)} className="input-base" required />
-                {checkingFirst && <p className="text-[11px] text-slate-400 mt-1">할인 여부 확인중...</p>}
-                {!checkingFirst && isFirstOrder && form.customer_email && <p className="text-[11px] text-emerald-500 mt-1">🎉 첫 주문 5% 할인이 적용됩니다!</p>}
-              </div>
+              <div><label className="text-sm font-medium text-slate-700 mb-1 block">이메일 *</label><input type="email" value={form.customer_email} onChange={(e) => updateForm('customer_email', e.target.value)} className="input-base" required /></div>
               <div className="sm:col-span-2"><label className="text-sm font-medium text-slate-700 mb-1 block">전화번호</label><input type="tel" value={form.customer_phone} onChange={(e) => updateForm('customer_phone', e.target.value)} className="input-base" placeholder="선택사항" /></div>
             </div>
           </div>

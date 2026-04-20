@@ -8,12 +8,6 @@ const resend = new Resend(process.env.RESEND_API_KEY || 'placeholder');
 const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || 'hello@styleheba.com';
 const ADMIN_EMAIL = 'jamie@hebajewelryinc.com';
 
-// 할인 계산 함수 (서버에서 재검증)
-function calcDiscount(subtotal: number, isFirst: boolean): number {
-  if (!isFirst || subtotal < 100) return 0;
-  return Math.round(subtotal * 0.05 * 100) / 100;
-}
-
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
@@ -24,23 +18,12 @@ export async function POST(request: NextRequest) {
       fulfillment_type, payment_method, customer_note,
       shipping_line1, shipping_line2, shipping_city,
       shipping_state, shipping_zip,
-      items, subtotal, shipping_fee,
+      items, subtotal, shipping_fee, discount_amount, total,
     } = body;
 
     if (!customer_name || !customer_email || !items?.length) {
       return NextResponse.json({ error: '필수 정보를 입력해주세요' }, { status: 400 });
     }
-
-    // 서버에서 첫 주문 여부 재검증
-    const { count } = await supabase
-      .from('orders')
-      .select('id', { count: 'exact', head: true })
-      .eq('customer_email', customer_email)
-      .not('status', 'in', '("cancelled","refunded")');
-
-    const isFirstOrder = count === 0;
-    const discount_amount = calcDiscount(subtotal, isFirstOrder);
-    const total = subtotal + (shipping_fee || 0) - discount_amount;
 
     const shipping_address = fulfillment_type === 'shipping'
       ? { line1: shipping_line1, line2: shipping_line2, city: shipping_city, state: shipping_state, zip: shipping_zip }
@@ -112,14 +95,13 @@ export async function POST(request: NextRequest) {
           <p><strong>전화:</strong> ${customer_phone || '미입력'}</p>
           <p><strong>결제:</strong> ${payment_method.toUpperCase()}</p>
           <p><strong>수령:</strong> ${fulfillment_type === 'pickup' ? '픽업' : '배송'}</p>
-          <p><strong>첫 주문:</strong> ${isFirstOrder ? '✅ 예 (5% 할인 적용)' : '❌ 아니오'}</p>
           <hr />
           <p><strong>주문 상품:</strong></p>
           <pre>${itemList}</pre>
           <hr />
           <p><strong>소계:</strong> $${subtotal.toFixed(2)}</p>
           ${shipping_fee > 0 ? `<p><strong>배송비:</strong> $${shipping_fee.toFixed(2)}</p>` : ''}
-          ${discount_amount > 0 ? `<p><strong>첫 주문 할인:</strong> -$${discount_amount.toFixed(2)}</p>` : ''}
+          ${discount_amount > 0 ? `<p><strong>할인:</strong> -$${discount_amount.toFixed(2)}</p>` : ''}
           <p><strong>합계:</strong> $${total.toFixed(2)}</p>
           ${customer_note ? `<hr /><p><strong>고객 메모:</strong> ${customer_note}</p>` : ''}
           <hr />
